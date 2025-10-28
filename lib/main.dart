@@ -35,16 +35,18 @@ class MainBottomNav extends StatefulWidget {
 class _MainBottomNavState extends State<MainBottomNav> {
   int _selectedIndex = 0;
 
+  /// 🟩 Simpan semua data riwayat
   List<Map<String, dynamic>> _riwayatPenilaian = [];
   List<Map<String, dynamic>> _riwayatMenu = [];
 
-  void addPenilaian(Map<String, dynamic> penilaian) {
+  /// 🟩 Fungsi untuk menambahkan data dari halaman lain
+  void _tambahPenilaian(Map<String, dynamic> penilaian) {
     setState(() {
       _riwayatPenilaian.add(penilaian);
     });
   }
 
-  void addMenu(Map<String, dynamic> menu) {
+  void _tambahMenu(Map<String, dynamic> menu) {
     setState(() {
       _riwayatMenu.add(menu);
     });
@@ -52,12 +54,13 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      HomePage(onSimpanMenu: addMenu),
-      PenilaianPage(onKirim: addPenilaian),
+    final List<Widget> pages = [
+      /// ✅ Pastikan parameter sesuai dengan nama di halaman
+      HomePage(onKirim: _tambahMenu), // kalau di HomePage pakainya onKirim
+      PenilaianPage(onKirim: _tambahPenilaian),
       RiwayatPage(
-        riwayatPenilaian: _riwayatPenilaian,
         riwayatMenu: _riwayatMenu,
+        riwayatPenilaian: _riwayatPenilaian,
       ),
     ];
 

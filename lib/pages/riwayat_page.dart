@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class RiwayatPage extends StatelessWidget {
@@ -14,7 +16,7 @@ class RiwayatPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2, // Dua tab: Menu & Penilaian
+      length: 2,
       child: Scaffold(
         backgroundColor: const Color(0xFFEAF8E6),
         appBar: AppBar(
@@ -41,7 +43,6 @@ class RiwayatPage extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            // Tab 1 - Riwayat Menu Harian
             _buildRiwayatList(
               context,
               riwayatMenu,
@@ -49,8 +50,6 @@ class RiwayatPage extends StatelessWidget {
               Icons.fastfood,
               Colors.green[100]!,
             ),
-
-            // Tab 2 - Riwayat Penilaian
             _buildRiwayatList(
               context,
               riwayatPenilaian,
@@ -95,21 +94,7 @@ class RiwayatPage extends StatelessWidget {
           margin: const EdgeInsets.symmetric(vertical: 8),
           child: ListTile(
             contentPadding: const EdgeInsets.all(12),
-            leading: data['gambar'] != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.file(
-                      File(data['gambar']),
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                : CircleAvatar(
-                    radius: 30,
-                    backgroundColor: color,
-                    child: Icon(icon, color: Colors.green[800]),
-                  ),
+            leading: _buildImage(data['gambar'], color, icon),
             title: Text(
               data['menu'] ?? data['hasil'] ?? 'Tidak ada data',
               style: const TextStyle(
@@ -125,6 +110,68 @@ class RiwayatPage extends StatelessWidget {
           ),
         );
       }).toList(),
+    );
+  }
+
+  /// Fungsi untuk menampilkan gambar secara aman di semua platform
+  Widget _buildImage(dynamic gambar, Color color, IconData icon) {
+    if (gambar == null) {
+      return CircleAvatar(
+        radius: 30,
+        backgroundColor: color,
+        child: Icon(icon, color: Colors.green[800]),
+      );
+    }
+
+    try {
+      // Jika sedang di web
+      if (kIsWeb) {
+        if (gambar is Uint8List) {
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.memory(
+              gambar,
+              width: 60,
+              height: 60,
+              fit: BoxFit.cover,
+            ),
+          );
+        } else if (gambar is String && gambar.startsWith('data:image')) {
+          // base64 image (jika diambil dari web picker)
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.network(
+              gambar,
+              width: 60,
+              height: 60,
+              fit: BoxFit.cover,
+            ),
+          );
+        }
+      } else {
+        // Android/iOS
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.file(
+            File(gambar),
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+          ),
+        );
+      }
+    } catch (e) {
+      return CircleAvatar(
+        radius: 30,
+        backgroundColor: color,
+        child: Icon(icon, color: Colors.green[800]),
+      );
+    }
+
+    return CircleAvatar(
+      radius: 30,
+      backgroundColor: color,
+      child: Icon(icon, color: Colors.green[800]),
     );
   }
 }

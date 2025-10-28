@@ -10,14 +10,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  # Package tambahan
-  image_picker: ^1.0.5
-  shared_preferences: ^2.3.2
+  image_picker: ^1.1.2
+  image_picker_for_web: ^3.0.2
   google_fonts: ^6.1.0
   flutter_rating_bar: ^4.0.1
-
-  # Ikon bawaan Cupertino (iOS-style)
+  shared_preferences: ^2.3.2
   cupertino_icons: ^1.0.8
 
 dev_dependencies:

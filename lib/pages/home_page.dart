@@ -1,11 +1,12 @@
-import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class HomePage extends StatefulWidget {
-  final Function(Map<String, dynamic>) onSimpanMenu;
+  final Function(Map<String, dynamic>) onKirim;
 
-  const HomePage({super.key, required this.onSimpanMenu});
+  const HomePage({super.key, required this.onKirim});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -14,56 +15,40 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final TextEditingController _namaMenuController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
-  File? _image;
 
-  Future<void> _ambilGambar() async {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.green),
-              title: const Text('Ambil dari Kamera'),
-              onTap: () async {
-                final pickedFile = await _picker.pickImage(
-                  source: ImageSource.camera,
-                );
-                if (pickedFile != null) {
-                  setState(() => _image = File(pickedFile.path));
-                }
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: Colors.green),
-              title: const Text('Pilih dari Galeri'),
-              onTap: () async {
-                final pickedFile = await _picker.pickImage(
-                  source: ImageSource.gallery,
-                );
-                if (pickedFile != null) {
-                  setState(() => _image = File(pickedFile.path));
-                }
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
+  XFile? _pickedFile;
+  Uint8List? _imageBytes;
+
+  // 🟢 Ambil gambar dari kamera atau galeri
+  Future<void> _ambilGambar(ImageSource source) async {
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality: 80,
+      );
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _pickedFile = pickedFile;
+          _imageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Error picking image: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengambil gambar: $e')));
+    }
   }
 
+  // 🟢 Simpan menu ke riwayat
   void _simpanMenu() {
     if (_namaMenuController.text.isNotEmpty) {
-      widget.onSimpanMenu({
+      // Simpan data lengkap ke Riwayat
+      widget.onKirim({
         "nama": _namaMenuController.text,
-        "tanggal": DateTime.now().toString(),
-        "gambar": _image?.path,
+        "tanggal": DateTime.now().toString().substring(0, 16),
+        "gambarBytes": _imageBytes, // simpan bytes agar bisa ditampilkan di web
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -74,7 +59,10 @@ class _HomePageState extends State<HomePage> {
       );
 
       _namaMenuController.clear();
-      setState(() => _image = null);
+      setState(() {
+        _pickedFile = null;
+        _imageBytes = null;
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -102,7 +90,6 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Card menu harian
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -122,6 +109,8 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const SizedBox(height: 15),
+
+                    // 🟢 Input nama makanan
                     TextField(
                       controller: _namaMenuController,
                       decoration: InputDecoration(
@@ -137,8 +126,48 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const SizedBox(height: 15),
+
+                    // 🟢 Tambah foto makanan
                     GestureDetector(
-                      onTap: _ambilGambar,
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.white,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(20),
+                            ),
+                          ),
+                          builder: (context) => SafeArea(
+                            child: Wrap(
+                              children: [
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.green,
+                                  ),
+                                  title: const Text('Ambil dari Kamera'),
+                                  onTap: () {
+                                    _ambilGambar(ImageSource.camera);
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.photo_library,
+                                    color: Colors.green,
+                                  ),
+                                  title: const Text('Pilih dari Galeri'),
+                                  onTap: () {
+                                    _ambilGambar(ImageSource.gallery);
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                       child: Container(
                         width: double.infinity,
                         height: 180,
@@ -147,7 +176,7 @@ class _HomePageState extends State<HomePage> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.green.shade200),
                         ),
-                        child: _image == null
+                        child: _imageBytes == null
                             ? Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: const [
@@ -165,15 +194,18 @@ class _HomePageState extends State<HomePage> {
                               )
                             : ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: Image.file(
-                                  _image!,
+                                child: Image.memory(
+                                  _imageBytes!,
                                   fit: BoxFit.cover,
                                   width: double.infinity,
                                 ),
                               ),
                       ),
                     ),
+
                     const SizedBox(height: 20),
+
+                    // 🟢 Tombol simpan
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -198,6 +230,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+
             const SizedBox(height: 30),
             Text(
               "Pastikan makanan mengandung karbohidrat, protein, sayur, dan buah agar seimbang 💚",

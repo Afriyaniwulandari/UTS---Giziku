@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -15,7 +16,7 @@ class PenilaianPage extends StatefulWidget {
 
 class _PenilaianPageState extends State<PenilaianPage> {
   final TextEditingController _komentarController = TextEditingController();
-  File? _gambar;
+  XFile? _pickedFile;
   double _rating = 0;
   final ImagePicker _picker = ImagePicker();
 
@@ -25,12 +26,14 @@ class _PenilaianPageState extends State<PenilaianPage> {
       imageQuality: 80,
     );
     if (pickedFile != null) {
-      setState(() => _gambar = File(pickedFile.path));
+      setState(() => _pickedFile = pickedFile);
     }
   }
 
   void _kirimPenilaian() {
-    if (_rating == 0 || _gambar == null || _komentarController.text.isEmpty) {
+    if (_rating == 0 ||
+        _pickedFile == null ||
+        _komentarController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Lengkapi penilaian dan upload foto terlebih dahulu!"),
@@ -41,7 +44,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
 
     final data = {
       'hasil': "Rating: $_rating ⭐\nKomentar: ${_komentarController.text}",
-      'gambar': _gambar!.path,
+      'gambar': _pickedFile!.path,
       'tanggal': DateTime.now().toString().substring(0, 16),
     };
 
@@ -49,7 +52,7 @@ class _PenilaianPageState extends State<PenilaianPage> {
 
     setState(() {
       _rating = 0;
-      _gambar = null;
+      _pickedFile = null;
       _komentarController.clear();
     });
 
@@ -143,16 +146,23 @@ class _PenilaianPageState extends State<PenilaianPage> {
                   const SizedBox(height: 10),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
-                    child: _gambar != null
+                    child: _pickedFile != null
                         ? ClipRRect(
-                            key: ValueKey(_gambar!.path),
+                            key: ValueKey(_pickedFile!.path),
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.file(
-                              _gambar!,
-                              height: 200,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
+                            child: kIsWeb
+                                ? Image.network(
+                                    _pickedFile!.path,
+                                    height: 200,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.file(
+                                    File(_pickedFile!.path),
+                                    height: 200,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                           )
                         : Container(
                             height: 200,
