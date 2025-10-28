@@ -41,14 +41,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // 🟢 Simpan menu ke riwayat
   void _simpanMenu() {
     if (_namaMenuController.text.isNotEmpty) {
       // Simpan data lengkap ke Riwayat
       widget.onKirim({
-        "nama": _namaMenuController.text,
+        "menu": _namaMenuController.text, // ubah dari 'nama' ke 'menu'
         "tanggal": DateTime.now().toString().substring(0, 16),
-        "gambarBytes": _imageBytes, // simpan bytes agar bisa ditampilkan di web
+        "gambar": _imageBytes, // ubah dari 'gambarBytes' ke 'gambar'
       });
 
       ScaffoldMessenger.of(context).showSnackBar(

@@ -35,17 +35,18 @@ class MainBottomNav extends StatefulWidget {
 class _MainBottomNavState extends State<MainBottomNav> {
   int _selectedIndex = 0;
 
-  /// 🟩 Simpan semua data riwayat
+  /// 🟩 Data riwayat untuk dua halaman
   List<Map<String, dynamic>> _riwayatPenilaian = [];
   List<Map<String, dynamic>> _riwayatMenu = [];
 
-  /// 🟩 Fungsi untuk menambahkan data dari halaman lain
+  /// 🟩 Fungsi untuk menambahkan data penilaian dari halaman Penilaian
   void _tambahPenilaian(Map<String, dynamic> penilaian) {
     setState(() {
       _riwayatPenilaian.add(penilaian);
     });
   }
 
+  /// 🟩 Fungsi untuk menambahkan data menu dari halaman Home
   void _tambahMenu(Map<String, dynamic> menu) {
     setState(() {
       _riwayatMenu.add(menu);
@@ -54,10 +55,10 @@ class _MainBottomNavState extends State<MainBottomNav> {
 
   @override
   Widget build(BuildContext context) {
+    /// ✅ Urutan halaman dalam BottomNav
     final List<Widget> pages = [
-      /// ✅ Pastikan parameter sesuai dengan nama di halaman
-      HomePage(onKirim: _tambahMenu), // kalau di HomePage pakainya onKirim
-      PenilaianPage(onKirim: _tambahPenilaian),
+      HomePage(onKirim: _tambahMenu), // kirim data menu ke sini
+      PenilaianPage(onKirim: _tambahPenilaian), // kirim data penilaian ke sini
       RiwayatPage(
         riwayatMenu: _riwayatMenu,
         riwayatPenilaian: _riwayatPenilaian,
@@ -68,6 +69,8 @@ class _MainBottomNavState extends State<MainBottomNav> {
       body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
+        selectedItemColor: Colors.green,
+        unselectedItemColor: Colors.grey,
         onTap: (index) => setState(() => _selectedIndex = index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
